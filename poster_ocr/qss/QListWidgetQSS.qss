@@ -1,0 +1,43 @@
+QListWidget, QListView, QTreeWidget, QTreeView {
+    outline: 0px;
+}
+
+QListWidget {
+    min-width: 110px;
+    max-width: 110px;
+    color: black;
+    background: #F5F5F5;
+}
+QListWidget::item:hover{
+    background: rgb(220, 234, 246);
+    border-left: 3px rgb(220, 234, 246);
+}
+QListWidget::item:selected {
+    background: lightGray;
+    border-left: 3px solid blue;
+    color: black;
+}
+HistoryPanel:hover {
+    background: rgb(52, 52, 52);
+}
+
+QPushButton{
+        border-radius: 4px;
+        border: none;
+        width: 75px;
+        height: 25px;
+}
+QPushButton:enabled {
+        background: rgb(68, 69, 73);
+        color: white;
+}
+QPushButton:!enabled {
+        background: rgb(100, 100, 100);
+        color: rgb(200, 200, 200);
+}
+QPushButton:enabled:hover{
+        background: rgb(85, 85, 85);
+}
+QPushButton:enabled:pressed{
+        background: rgb(80, 80, 80);
+}

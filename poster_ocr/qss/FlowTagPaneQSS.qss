@@ -1,0 +1,13 @@
+QWidget::pane {
+    border: none;
+}
+
+QWidget {
+    border:10px;
+    background: rgb(60, 63, 65);
+    dashed #242424;
+}
+QPushButton {
+    border: none;
+    background-color:transparent;
+}

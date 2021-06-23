@@ -1,0 +1,11 @@
+QLineEdit {
+    border: 2px solid gray;
+    border-radius: 10px;
+    padding: 0 8px;
+    background: yellow;
+    selection-background-color: darkgray;
+}
+
+QLineEdit[echoMode="2"] {
+    lineedit-password-character: 9679;
+}

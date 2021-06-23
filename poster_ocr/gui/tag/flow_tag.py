@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 
 import json
 
-from poster_ocr.gui.layout.FlowLayout import FlowLayout
+from poster_ocr.gui.layout.flow_layout import FlowLayout
 from poster_ocr.gui.util.excpetion import JsonDumpException, JsonLoadException
 
 

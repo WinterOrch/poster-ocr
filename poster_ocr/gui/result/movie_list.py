@@ -1,12 +1,14 @@
 from enum import IntEnum
 
-from PyQt5.QtCore import QSortFilterProxyModel, Qt, QPoint, QSize, pyqtSignal
-from PyQt5.QtGui import QPalette, QPen
+from PyQt5.QtCore import QSortFilterProxyModel, Qt, QPoint, QSize, pyqtSignal, QModelIndex, QRect, QEvent, \
+    QAbstractListModel, QAbstractTableModel, QVariant
+from PyQt5.QtGui import QPalette, QPen, QPainter, QMouseEvent
 from PyQt5.QtWidgets import QStyledItemDelegate, QListView, QTableView, QFrame, QAbstractItemView, QAction, QHeaderView, \
-    QMenu
+    QMenu, QStyle, QSizePolicy
 
 from poster_ocr.gui.util.dispatch import Signal
-from poster_ocr.gui.util.helpers import ItemViewNoScrollMixin
+from poster_ocr.gui.util.helpers import ItemViewNoScrollMixin, ReaderFetchMoreMixin
+from poster_ocr.vo.douban_movie import DoubanMovieInfo
 
 
 class Column(IntEnum):
@@ -14,10 +16,11 @@ class Column(IntEnum):
     MOVIE = 1
     DATE = 2
     STAFF = 3
-    DESCRIPTION = 4
+    RATE = 4
+    DESCRIPTION = 5
 
 
-class SongListModel(QAbstractListModel, ReaderFetchMoreMixin):
+class MovieListModel(QAbstractListModel, ReaderFetchMoreMixin):
     def __init__(self, reader, parent=None):
         super().__init__(parent)
 
@@ -44,7 +47,7 @@ class SongListModel(QAbstractListModel, ReaderFetchMoreMixin):
         return None
 
 
-class SongListDelegate(QStyledItemDelegate):
+class MovieListDelegate(QStyledItemDelegate):
     def __init__(self, parent):
         super().__init__(parent=parent)
 
@@ -56,25 +59,25 @@ class SongListDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
 
-        song = index.data(Qt.UserRole)
+        movie = index.data(Qt.UserRole)
         top = option.rect.top()
         bottom = option.rect.bottom()
         no_x = self.number_rect_x
-        duration_width = 100
-        artists_name_width = 150
+        date_width = 100
+        staffs_display = 150
 
-        # Draw duration ms
-        duration_x = option.rect.topRight().x() - duration_width
+        # Draw date
+        duration_x = option.rect.topRight().x() - date_width
         duration_rect = QRect(QPoint(duration_x, top), option.rect.bottomRight())
         painter.drawText(duration_rect, Qt.AlignRight | Qt.AlignVCenter,
-                         song.duration_ms_display)
+                         movie.duration_ms_display)
 
-        # Draw artists name
-        artists_name_x = option.rect.topRight().x() - duration_width - artists_name_width
+        # Draw staffs
+        artists_name_x = option.rect.topRight().x() - date_width - staffs_display
         artists_name_rect = QRect(QPoint(artists_name_x, top),
                                   QPoint(duration_x, bottom))
         painter.drawText(artists_name_rect, Qt.AlignRight | Qt.AlignVCenter,
-                         song.artists_name_display)
+                         movie.artists_name_display)
 
         # Draw song number or play_btn when it is hovered
         no_bottom_right = QPoint(no_x, bottom)
@@ -87,7 +90,7 @@ class SongListDelegate(QStyledItemDelegate):
 
         # Draw title
         title_rect = QRect(QPoint(no_x, top), QPoint(artists_name_x, bottom))
-        painter.drawText(title_rect, Qt.AlignVCenter, song.title_display)
+        painter.drawText(title_rect, Qt.AlignVCenter, movie.title_display)
 
         painter.restore()
 
@@ -113,15 +116,15 @@ class SongListDelegate(QStyledItemDelegate):
         return size
 
 
-class SongListView(ItemViewNoScrollMixin, QListView):
+class MovieListView(ItemViewNoScrollMixin, QListView):
 
-    play_song_needed = pyqtSignal([object])
+    movie_list_activated = pyqtSignal([object])
 
     def __init__(self, parent=None, **kwargs):
         super().__init__(parent, **kwargs)
         QListView.__init__(self, parent)
 
-        self.delegate = SongListDelegate(self)
+        self.delegate = MovieListDelegate(self)
         self.setItemDelegate(self.delegate)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
@@ -131,23 +134,19 @@ class SongListView(ItemViewNoScrollMixin, QListView):
         self.activated.connect(self._on_activated)
 
     def _on_activated(self, index):
-        self.play_song_needed.emit(index.data(Qt.UserRole))
+        self.movie_list_activated.emit(index.data(Qt.UserRole))
 
 
-class SongsTableModel(QAbstractTableModel, ReaderFetchMoreMixin):
-    def __init__(self, source_name_map=None, reader=None, parent=None):
-        """
-
-        :param songs: 歌曲列表
-        :param songs_g: 歌曲列表生成器（当歌曲列表生成器不为 None 时，忽略 songs 参数）
-        """
+class MoviesTableModel(QAbstractTableModel, ReaderFetchMoreMixin):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self._reader = reader
         self._fetch_more_step = 30
         self._items = []
         self._is_fetching = False
 
-        self._source_name_map = source_name_map or {}
+    def append_data(self, x):
+        self._items.append(x)
+        self.layoutChanged.emit()
 
     def removeRows(self, row, count, parent=QModelIndex()):
         self.beginRemoveRows(parent, row, row + count - 1)
@@ -157,38 +156,6 @@ class SongsTableModel(QAbstractTableModel, ReaderFetchMoreMixin):
         self.endRemoveRows()
         return True
 
-    def flags(self, index):
-        # Qt.NoItemFlags is ItemFlag and we should return ItemFlags
-        no_item_flags = Qt.NoItemFlags | Qt.NoItemFlags
-        if index.column() in (Column.source, Column.index, Column.duration):
-            return no_item_flags
-
-        # default flags
-        flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
-        if index.column() == Column.song:
-            flags |= Qt.ItemIsDragEnabled
-
-        song = index.data(Qt.UserRole)
-        # If song's state is `not_exists` or `cant_upgrade`, the album and
-        # artist columns are disabled.
-        incomplete = False
-        if ModelFlags.v2 & song.meta.flags:
-            if song.state is (ModelState.not_exists, ModelState.cant_upgrade):
-                incomplete = True
-        else:
-            if song and song.exists == ModelExistence.no:
-                incomplete = True
-        if incomplete:
-            if index.column() != Column.song:
-                flags = no_item_flags
-        else:
-            if index.column() == Column.album:
-                flags |= Qt.ItemIsDragEnabled
-            elif index.column() == Column.artist:
-                flags |= Qt.ItemIsEditable
-
-        return flags
-
     def rowCount(self, parent=QModelIndex()):
         return len(self._items)
 
@@ -196,7 +163,7 @@ class SongsTableModel(QAbstractTableModel, ReaderFetchMoreMixin):
         return 6
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
-        sections = ('', '来源', '歌曲标题', '时长', '歌手', '专辑')
+        sections = ('', '电影', '上映时间', '演职人员', '评分', '描述')
         if orientation == Qt.Horizontal:
             if role == Qt.DisplayRole:
                 if section < len(sections):
@@ -228,21 +195,20 @@ class SongsTableModel(QAbstractTableModel, ReaderFetchMoreMixin):
         if index.row() >= len(self._items) or index.row() < 0:
             return QVariant()
 
-        song = self._items[index.row()]
+        movie = self._items[index.row()]
         if role in (Qt.DisplayRole, Qt.ToolTipRole):
-            if index.column() == Column.index:
+            if index.column() == Column.INDEX:
                 return index.row() + 1
-            elif index.column() == Column.source:
-                name = source = song.source
-                return self._source_name_map.get(source, name).strip()
-            elif index.column() == Column.song:
-                return song.title_display
-            elif index.column() == Column.duration:
-                return song.duration_ms_display
-            elif index.column() == Column.artist:
-                return song.artists_name_display
-            elif index.column() == Column.album:
-                return song.album_name_display
+            elif index.column() == Column.MOVIE:
+                return movie.title_display
+            elif index.column() == Column.DATE:
+                return movie.date_display
+            elif index.column() == Column.STAFF:
+                return movie.staffs_display
+            elif index.column() == Column.RATE:
+                return movie.rate_display
+            elif index.column() == Column.DESCRIPTION:
+                return movie.description_display
         elif role == Qt.TextAlignmentRole:
             if index.column() == Column.index:
                 return Qt.AlignCenter | Qt.AlignVCenter
@@ -251,19 +217,8 @@ class SongsTableModel(QAbstractTableModel, ReaderFetchMoreMixin):
         elif role == Qt.EditRole:
             return 1
         elif role == Qt.UserRole:
-            return song
+            return movie
         return QVariant()
-
-    def mimeData(self, indexes):
-        if len(indexes) == 1:
-            index = indexes[0]
-            model = song = index.data(Qt.UserRole)
-            if index.column() == Column.album:
-                try:
-                    model = song.album
-                except (ProviderIOError, Exception):
-                    model = None
-            return ModelMimeData(model)
 
 
 class StaffsSelectionView(QListView):
@@ -355,6 +310,8 @@ class MoviesTableView(ItemViewNoScrollMixin, QTableView):
     play_song_needed = pyqtSignal([object])
     add_to_list_needed = pyqtSignal(list)
 
+    show_poster_needed = pyqtSignal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         QTableView.__init__(self, parent)
@@ -403,7 +360,7 @@ class MoviesTableView(ItemViewNoScrollMixin, QTableView):
         menu = QMenu()
 
         # add to playlist action
-        add_to_playlist_action = QAction('添加到播放队列', menu)
+        add_to_playlist_action = QAction('添加', menu)
         add_to_playlist_action.triggered.connect(lambda: self._add_to_playlist(indexes))
         menu.addAction(add_to_playlist_action)
 
@@ -449,3 +406,5 @@ class MoviesTableView(ItemViewNoScrollMixin, QTableView):
                 distinct_rows.add(row)
         source_model.removeRows(indexes[0].row(), len(distinct_rows))
 
+    def show_poster_by_url(self, index):
+        self.show_poster_needed(self.model().data(index, Qt.UserRole).photo_url)

@@ -12,11 +12,16 @@ class ClientWidget(QWidget):
         with open('../qss/QListWidgetQSS.qss', 'r') as f:
             self.list_style = f.read()
 
-        self.main_layout = QHBoxLayout(self)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-
         self.left_widget = QListWidget()
         self.left_widget.setStyleSheet(self.list_style)
-        self.main_layout.addWidget(self.left_widget)
 
         self.middle_widget = ResDisplayWidget()
+
+    def _set_ui(self):
+        self._layout = QHBoxLayout(self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+
+        self._layout.addLayout(self.left_widget)
+        self._layout.addLayout(self.middle_widget)
+
+        self.setLayout(self._layout)

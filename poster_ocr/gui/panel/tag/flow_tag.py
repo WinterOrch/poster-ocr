@@ -73,6 +73,9 @@ class FlowTagPane(QWidget):
             if self._tag_selected_list.__contains__(tag_text):
                 self._tag_selected_list.remove(tag_text)
 
+    def get_selected_tags(self) -> []:
+        return self._tag_selected_list
+
 
 class FlowTag(QWidget):
     tag_selected = pyqtSignal(str, bool)
@@ -85,7 +88,7 @@ class FlowTag(QWidget):
         self._is_selected = False
 
         self.setWindowTitle('TerminalDemo')
-        with open('../../qss/FlowTagPaneQSS.qss', 'r') as f:
+        with open('../../../qss/FlowTagPaneQSS.qss', 'r') as f:
             self._style_sheet = f.read()
         self.setStyleSheet(self._style_sheet)
 
@@ -96,7 +99,7 @@ class FlowTag(QWidget):
         self._bind_signal()
 
     def _setup_ui(self):
-        pix_img = QtGui.QPixmap(QtGui.QImage(r'../../icon/cancel.png'))
+        pix_img = QtGui.QPixmap(QtGui.QImage(r'../../../icon/cancel.png'))
         fit_pixmap = pix_img.scaled(36, 36, QtCore.Qt.IgnoreAction, QtCore.Qt.SmoothTransformation)
         delete_icon = QtGui.QIcon(fit_pixmap)
         self._delete_button.setIcon(delete_icon)

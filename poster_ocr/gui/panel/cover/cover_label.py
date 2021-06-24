@@ -8,10 +8,12 @@ COVER_LABEL_RADIUS = 3
 
 
 class CoverLabel(QLabel):
-    def __init__(self, parent=None, pixmap=None):
+    def __init__(self, width, height, parent=None, pixmap=None):
         super().__init__(parent=parent)
 
         self._pixmap = pixmap
+        self.setMinimumSize(width, height)
+        self.setMaximumSize(width, height)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.MinimumExpanding)
 
     def show_pixmap(self, pixmap):

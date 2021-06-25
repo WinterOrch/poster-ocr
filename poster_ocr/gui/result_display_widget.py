@@ -12,7 +12,7 @@ class ResDisplayWidget(QWidget):
         super(ResDisplayWidget, self).__init__(parent=parent)
         self.setObjectName("ResDisplayWidget")
 
-        with open('../qss/QListWidgetQSS.qss', 'r') as f:
+        with open('../qss/ClientWidgetQSS.qss', 'r') as f:
             self.list_style = f.read()
 
         self.result_display_table = MoviesTableView(self)
@@ -20,6 +20,8 @@ class ResDisplayWidget(QWidget):
 
         self.setMouseTracking(True)
         self._mouse_relative_y = -1
+
+        self._model = None
 
         self._setup_ui()
 
@@ -40,13 +42,17 @@ class ResDisplayWidget(QWidget):
         self.render.pop_new_bubble(QPoint(self.width() + 20, self._mouse_relative_y), movie.photo_url)
         # TODO 理论上这样会画到 parent 外，如果不行就换全局坐标试一试
 
-    def _show_results(self, lx: [DoubanMovieInfo]):
+    def show_results(self, lx: [DoubanMovieInfo]):
         model = MoviesTableModel(self.result_display_table)
         model.append_data(lx)
+        self._model = model
         filter_mode = MovieFilterProxyModel(self.result_display_table)
         filter_mode.setSourceModel(model)
         self.result_display_table.setModel(filter_mode)
         self.result_display_table.scrollToTop()
+
+    def dump_results(self) -> [DoubanMovieInfo]:
+        return self._model.fetch_data()
 
     def mouseMoveEvent(self, a0: QMouseEvent) -> None:
         super(ResDisplayWidget, self).mouseMoveEvent(a0)

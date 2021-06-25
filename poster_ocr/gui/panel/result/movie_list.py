@@ -148,6 +148,9 @@ class MoviesTableModel(QAbstractTableModel, ReaderFetchMoreMixin):
         self._items.append(x)
         self.layoutChanged.emit()
 
+    def fetch_data(self) -> [DoubanMovieInfo]:
+        return self._items
+
     def removeRows(self, row, count, parent=QModelIndex()):
         self.beginRemoveRows(parent, row, row + count - 1)
         while count > 0:

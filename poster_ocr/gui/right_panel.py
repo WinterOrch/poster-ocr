@@ -1,3 +1,4 @@
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
@@ -29,4 +30,24 @@ class RightPanel(QWidget):
         self.history_panel.cover_ocr_needed.connect(self._call_for_ocr)
 
     def _call_for_ocr(self, path: str):
+        if self.warning("Would you like to clear existing tags before adding new ones?"):
+            self.flow_tag_panel.clear_all_tags()
         self.cover_ocr_needed(str).emit(path)
+
+    @staticmethod
+    def warning(info):
+        msg_box = QtWidgets.QMessageBox()
+
+        msg_box.setWindowTitle('Info')
+        msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+        msg_box.setText('Information')
+        msg_box.setInformativeText(info)
+        msg_box.addButton('Yes', QtWidgets.QMessageBox.AcceptRole)
+        no = msg_box.addButton('No', QtWidgets.QMessageBox.RejectRole)
+        msg_box.setDefaultButton(no)
+
+        reply = msg_box.exec()
+        if reply == QtWidgets.QMessageBox.AcceptRole:
+            return True
+        else:
+            return False

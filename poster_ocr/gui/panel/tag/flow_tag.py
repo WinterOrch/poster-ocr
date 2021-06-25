@@ -1,9 +1,10 @@
 from PyQt5 import QtGui, QtCore
-from PyQt5.QtCore import QEvent, pyqtSignal
+from PyQt5.QtCore import QEvent, pyqtSignal, Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 
 import json
 
+from poster_ocr.gui.animation.shadow_effect import AnimationShadowEffect
 from poster_ocr.gui.layout.flow_layout import FlowLayout
 from poster_ocr.gui.util.excpetion import JsonDumpException, JsonLoadException
 
@@ -17,6 +18,9 @@ class FlowTagPane(QWidget):
 
         self._flow_tag_dict = {}
         self._tag_selected_list = []
+
+        """Shine"""
+        self._animation_shadow = AnimationShadowEffect(Qt.yellow, loop_count=4)
 
     def _setup_ui(self):
         self.setLayout(self._layout)
@@ -75,6 +79,10 @@ class FlowTagPane(QWidget):
 
     def get_selected_tags(self) -> []:
         return self._tag_selected_list
+
+    def shine(self):
+        self.setGraphicsEffect(self._animation_shadow)
+        self._animation_shadow.start()
 
 
 class FlowTag(QWidget):

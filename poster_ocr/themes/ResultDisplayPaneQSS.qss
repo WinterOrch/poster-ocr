@@ -1,0 +1,47 @@
+QFrame[objectName="ResDisplayWidget"] {
+	background-color: rgb(60, 63, 65);
+}
+
+QHeaderView {
+	background: rgb(38, 39, 40);
+	
+	font: 10pt "Microsoft YaHei";
+}
+
+QHeaderView::section {
+	background: rgb(85, 85, 87);
+	font: 10pt "Microsoft YaHei";
+	color: rgb(152, 152, 152)
+}
+
+QTableView::item:alternate:!selected {
+	font: 11pt "Microsoft YaHei";
+	color: rgb(152, 152, 152);
+	background: rgb(38, 39, 40);
+}
+
+QTableView::item:!alternate:!selected {
+	font: 11pt "Microsoft YaHei";
+	color: rgb(232, 232, 237);
+	background: rgb(38, 39, 40);
+}
+
+QTableView {
+	font: 11pt "Microsoft YaHei";
+	color: rgb(152, 152, 152);
+	selection-background-color: rgb(50, 151, 243);
+	border: 1px solid #E0DDDC;
+	alternate-background-color: rgb(200, 200, 200);
+	gridline-color: lightgray;
+}
+
+QTableView::item:selected {
+	color: rgb(152, 152, 152);
+	background:rgb(248, 236, 212);
+}
+
+QTableView QHeaderView {
+	background-color: rgb(248, 248, 248);
+	font: 12pt "Microsoft YaHei";
+	color: rgb(112, 112, 112);
+}

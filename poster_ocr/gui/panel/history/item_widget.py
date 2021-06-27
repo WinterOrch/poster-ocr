@@ -1,16 +1,16 @@
 import os
 import time
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QPixmap, QLinearGradient, QGradient, QColor, QBrush, QFont, QPainter, QIcon
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QGridLayout, QPushButton, QListWidgetItem
+from PyQt5.QtWidgets import QLabel, QVBoxLayout, QGridLayout, QPushButton, QListWidgetItem, QFrame
 
 from poster_ocr.gui.animation.shadow_effect import AnimationShadowEffect
 from poster_ocr.vo.history_item import HistoryItemInfo
 
 COVER_WIDTH = 220
 COVER_HEIGHT = 308
-ITEM_HEIGHT = 420
+ITEM_HEIGHT = 380
 
 
 class CoverLabel(QLabel):
@@ -65,16 +65,18 @@ class CoverLabel(QLabel):
             painter.drawText(rect, Qt.AlignHCenter | Qt.AlignBottom, self.cover_title)
 
 
-class ItemWidget(QWidget):
+class ItemWidget(QFrame):
     cover_ocr_needed = pyqtSignal(str)
     deleting_needed = pyqtSignal(str, QListWidgetItem)
 
     def __init__(self, cover_dir, cover_title, history_time: time,
                  rec_icon: QIcon, del_icon: QIcon, item: QListWidgetItem,
-                 style_sheet=None, is_shiny=True):
-        super(ItemWidget, self).__init__()
-        self.setMinimumSize(COVER_WIDTH, ITEM_HEIGHT)
-        self.setMaximumSize(COVER_WIDTH, ITEM_HEIGHT)
+                 is_shiny=True, parent=None):
+        super(ItemWidget, self).__init__(parent=parent)
+        self.setObjectName("ItemWidget")
+
+        self.setMinimumSize(COVER_WIDTH + 5, ITEM_HEIGHT + 5)
+        self.setMaximumSize(COVER_WIDTH + 5, ITEM_HEIGHT + 5)
 
         self._item = item
 
@@ -84,13 +86,10 @@ class ItemWidget(QWidget):
         self._cover_title = cover_title
         self._time = history_time
 
-        if self._cover_dir is None:
+        if not self._cover_dir:
             self._label_cover = CoverLabel(self._cover_dir)
         else:
             self._label_cover = CoverLabel(self._cover_dir, self._cover_title)
-
-        if style_sheet is not None:
-            self.setStyleSheet(style_sheet)
 
         self._setup_ui(rec_icon, del_icon)
 
@@ -100,12 +99,16 @@ class ItemWidget(QWidget):
         self._is_new = is_shiny
 
     def _setup_ui(self, rec_icon: QIcon, del_icon: QIcon):
-        self._layout.setContentsMargins(2, 4, 2, 0)
+        self._layout.setContentsMargins(2, 2, 2, 6)
         self._layout.addWidget(self._label_cover)
 
         filepath, filename = os.path.split(self._cover_dir)
-        self._layout.addWidget(QLabel(filename, self))
-        self._layout.addWidget(QLabel(time.strftime("%Y-%m-%d %H:%M:%S", self._time)))
+        label = QLabel(filename, self)
+        label.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        self._layout.addWidget(label)
+        label = QLabel(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self._time)), self)
+        label.setAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
+        self._layout.addWidget(label)
 
         # Add buttons and bind signal
         button_layout = QGridLayout()
@@ -117,6 +120,10 @@ class ItemWidget(QWidget):
         del_button.clicked.connect(self._delete_me)
         button_layout.addWidget(rec_button, 0, 0)
         button_layout.addWidget(del_button, 0, 1)
+        self._layout.addLayout(button_layout)
+
+    def sizeHint(self):
+        return QSize(COVER_WIDTH, ITEM_HEIGHT)
 
     def shadow_start(self):
         self.setGraphicsEffect(self._animation_shadow)
@@ -131,10 +138,10 @@ class ItemWidget(QWidget):
             self._animation_shadow.stop()
 
     def _recognize_me(self):
-        self.cover_ocr_needed(str).emit(self._cover_dir)
+        self.cover_ocr_needed.emit(self._cover_dir)
 
     def _delete_me(self):
-        self.deleting_needed(str, QListWidgetItem).emit(self._cover_dir, self._item)
+        self.deleting_needed.emit(self._cover_dir, self._item)
 
     def get_history_item_info(self) -> HistoryItemInfo:
         return HistoryItemInfo(self._cover_dir, self._cover_title, self._time)

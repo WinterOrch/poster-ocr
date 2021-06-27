@@ -1,0 +1,12 @@
+
+QWidget {
+    border:2px dashed white;
+    background: rgb(78, 82, 84);
+	font: 75 16pt "Microsoft YaHei"; /*字体*/
+	color: white; /*字体颜色*/
+}
+
+QPushButton {
+    border: none;
+    background-color:transparent;
+}

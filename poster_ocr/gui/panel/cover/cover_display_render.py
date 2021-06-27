@@ -18,9 +18,6 @@ class Render:
 
         self._existing_bubbles = {}
 
-        with open('../../../qss/BubbleWidgetQSS.qss', 'r') as f:
-            self._bubble_list_style = f.read()
-
         self._na_manager = QNetworkAccessManager()
         self._na_manager.finished.connect(self.handle_response)
 
@@ -41,7 +38,7 @@ class Render:
             if isinstance(item, BubbleWrapperWidget):
                 item.terminate()
 
-        new_bubble = BubbleWrapperWidget(pos, parent=self._parent, style_sheet=self._bubble_list_style)
+        new_bubble = BubbleWrapperWidget(pos, parent=self._parent)
         self._existing_bubbles[url] = new_bubble
         load_widget = QSvgWidget(parent=new_bubble, minimumHeight=120, minimumWidth=120, visible=False)
         load_widget.load(LoadingIcon.grid())

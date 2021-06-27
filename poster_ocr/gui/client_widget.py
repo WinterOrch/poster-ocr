@@ -1,13 +1,15 @@
-from PyQt5.QtCore import QSize, Qt, pyqtSignal
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QListWidget, QListWidgetItem
-from PyQt5.uic.properties import QtCore
-from PyQt5.uic.uiparser import QtWidgets
 
+from gui.theme import read_qss_resource, get_icon_resource
 from poster_ocr.gui.result_display_widget import ResDisplayWidget
 from poster_ocr.gui.right_panel import RightPanel
 from poster_ocr.vo.douban_movie import DoubanMovieInfo
 from poster_ocr.vo.history_item import HistoryItemInfo
+
+ICON_SIZE = QSize(55, 55)
 
 
 class ClientWidget(QWidget):
@@ -39,8 +41,7 @@ class ClientWidget(QWidget):
         self.setObjectName("ClientWidget")
 
         self.setWindowTitle('Poster OCR')
-        with open('../qss/ClientWidgetQSS.qss', 'r') as f:
-            self.list_style = f.read()
+        self.list_style = read_qss_resource('ClientWidgetQSS.qss')
 
         self.left_widget = QListWidget()
         self.left_widget.setStyleSheet(self.list_style)
@@ -48,6 +49,8 @@ class ClientWidget(QWidget):
         self.middle_widget = ResDisplayWidget(self)
 
         self.right_widget = RightPanel(self)
+
+        self._set_ui()
 
     def _set_ui(self):
         self._layout = QHBoxLayout(self)
@@ -57,33 +60,38 @@ class ClientWidget(QWidget):
         self.left_widget.setFrameShape(QListWidget.NoFrame)
         self.left_widget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.left_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.left_widget.setIconSize(QtCore.QSize(48, 58))
+        self.left_widget.setIconSize(ICON_SIZE)
         self.left_widget.setViewMode(QtWidgets.QListView.IconMode)
 
-        icon_url_list = [None, '../icon/cloud-computing.png', '../icon/info.png']
+        icon_url_list = ['cancel.png', 'cloud-computing.png', 'info.png']
         item_str_list = ['Back', 'Recognize', 'Load History']
 
-        for icon_url, item_str in icon_url_list, item_str_list:
+        for icon_url, item_str in zip(icon_url_list, item_str_list):
             item = QListWidgetItem()
             if icon_url is not None:
                 icon = QIcon()
-                icon.addPixmap(QPixmap(icon_url))
-                item.setIcon(icon_url)
+                icon.addPixmap(
+                    QPixmap(get_icon_resource(icon_url)).scaled(ICON_SIZE, transformMode=Qt.SmoothTransformation)
+                )
+                item.setIcon(icon)
             item.setText(item_str)
-            # item.setSizeHint(QSize(110, 90))
-            # item.setTextAlignment(Qt.AlignCenter)
-            self.left_widget.addItem(icon_url)
+            item.setSizeHint(QSize(110, 90))
+            item.setTextAlignment(Qt.AlignCenter)
+            self.left_widget.addItem(item)
 
         # Combined Layout
-        combined_layout = QHBoxLayout(self._layout)
+        self.combined_widget = QWidget(self)
+        combined_layout = QHBoxLayout(self.combined_widget)
         combined_layout.setContentsMargins(0, 0, 0, 0)
-        combined_layout.setStretch(0, 5)
-        combined_layout.setStretch(1, 2)
+
+        self.middle_widget.setMinimumWidth(500)
+        self.right_widget.setMinimumWidth(300)
+
         combined_layout.addWidget(self.middle_widget)
         combined_layout.addWidget(self.right_widget)
 
         self._layout.addWidget(self.left_widget)
-        self._layout.addLayout(combined_layout)
+        self._layout.addWidget(self.combined_widget)
 
     def _bind_signals(self):
         self.left_widget.currentRowChanged.connect(self.on_func_button_pushed)
@@ -102,7 +110,7 @@ class ClientWidget(QWidget):
         msg_box.exec()
 
     def on_ocr_needed(self, path: str):
-        self.ocr_for_cover_file_needed(str).emit(path)
+        self.ocr_for_cover_file_needed.emit(path)
 
     def on_func_button_pushed(self, index):
         if index == 0:
@@ -112,14 +120,14 @@ class ClientWidget(QWidget):
             """Call for crawling"""
             tag_list = self.right_widget.flow_tag_panel.get_selected_tags()
             if tag_list:
-                self.crawl_for_listed_tags_needed([str]).emit(tag_list)
+                self.crawl_for_listed_tags_needed.emit(tag_list)
             else:
                 self.warning("Choose some tags you're interested in please.")
                 self.right_widget.flow_tag_panel.shine()
 
         elif index == 2:
             """Load history records for current user"""
-            self.show_history_records_for_current_user_needed().emit()
+            self.show_history_records_for_current_user_needed.emit()
 
     """         History Pane Concerned Methods          """
     def show_history(self, info_list: [HistoryItemInfo]):

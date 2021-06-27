@@ -11,17 +11,19 @@ class RightPanel(QWidget):
 
     def __init__(self, parent=None):
         super(RightPanel, self).__init__(parent=parent)
-        self.setWindowFlags(
-            Qt.Window | Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.X11BypassWindowManagerHint)
 
         self._layout = QVBoxLayout(self)
 
         self.history_panel = HistoryPanel(self)
         self.flow_tag_panel = FlowTagPane(self)
 
+        self._setup_ui()
+        self._bind_signals()
+
     def _setup_ui(self):
-        self._layout.setStretch(0, 3)   # History Panel should be bigger
-        self._layout.setStretch(1, 2)
+
+        self.history_panel.setMinimumHeight(500)
+        self.flow_tag_panel.setMinimumHeight(300)
 
         self._layout.addWidget(self.history_panel)
         self._layout.addWidget(self.flow_tag_panel)
@@ -32,7 +34,7 @@ class RightPanel(QWidget):
     def _call_for_ocr(self, path: str):
         if self.warning("Would you like to clear existing tags before adding new ones?"):
             self.flow_tag_panel.clear_all_tags()
-        self.cover_ocr_needed(str).emit(path)
+        self.cover_ocr_needed.emit(path)
 
     @staticmethod
     def warning(info):

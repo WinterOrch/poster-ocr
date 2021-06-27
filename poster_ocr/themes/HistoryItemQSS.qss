@@ -1,0 +1,38 @@
+QFrame[objectName="ItemWidget"] {
+    border-width: 1px 1px 1px 1px;
+    border-style: solid;
+    border-color: rgb(76,76,76);
+    border-radius:5px;
+}
+
+QListWidget[objectName="HistoryPanel"] {
+    border-width: 1px 1px 1px 1px;
+    border-style: solid;
+    border-color: rgb(50,50,50);
+    background-color: rgb(60, 63, 65)
+}
+
+QLabel {
+    font-family: "Segoe UI";
+    color: white;
+}
+
+QPushButton {
+    border: none;
+    padding: 4px;
+}
+
+QPushButton:hover {
+    background-color: #333333;
+    border-color: #444444;
+}
+
+QPushButton:pressed {
+    background-color: #111111;
+    border-color: #333333;
+    color: yellow;
+}
+
+QPushButton:disabled {
+    color: #333333;
+}

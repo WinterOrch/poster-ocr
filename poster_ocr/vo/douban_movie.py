@@ -3,8 +3,10 @@ from PyQt5.QtGui import QPixmap
 
 
 class DoubanMovieInfo:
-    def __init__(self, movie_title: str, photo_url: str, show_time: str, rate: str, other_des: dict):
+    def __init__(self, movie_title: str, staffs_display: str, photo_url: str, show_time: str, rate: str, other_des: dict):
         self.title_display = movie_title
+        self.staffs_display = staffs_display
+
         self.photo_url = photo_url
         self.date_display = show_time
         self.rate_display = rate

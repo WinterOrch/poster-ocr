@@ -49,6 +49,8 @@ def main():
         print(e)
     sys.exit(app.exec_())
 
+def on_crawl_called():
+    target =
 
 if __name__ == '__main__':
     main()

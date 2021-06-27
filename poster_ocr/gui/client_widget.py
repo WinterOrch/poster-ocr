@@ -13,7 +13,7 @@ ICON_SIZE = QSize(55, 55)
 
 
 class ClientWidget(QWidget):
-    crawl_for_listed_tags_needed = pyqtSignal()
+    crawl_for_listed_tags_needed = pyqtSignal([str])
     """Invoke display_douban_results() to display douban results
     
     You can also dump current results by invoking dump_current_results()
@@ -26,7 +26,7 @@ class ClientWidget(QWidget):
     dump_tags() and load_tags()
     """
 
-    show_history_records_for_current_user_needed = pyqtSignal([str])
+    show_history_records_for_current_user_needed = pyqtSignal()
     """Invoke show_history() to show all history records for the user
     
     You can also invoke add_new_record_for_user() if you are trying
